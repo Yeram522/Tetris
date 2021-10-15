@@ -29,11 +29,11 @@ private:
 	{
 		bool faultyInput = false;
 		if (this->width <= 0) {
-			this->width = 10;
+			this->width = 50;
 			faultyInput = true;
 		}
 		if (this->height <= 0) {
-			this->height = 10;
+			this->height = 50;
 			faultyInput = true;
 		}
 		size = (this->width + 1) * this->height;
@@ -57,7 +57,7 @@ public:
 
 	static Screen* GetInstance() {
 		if (Instance == nullptr) {
-			Instance = new Screen(20,20);
+			Instance = new Screen(30,30);
 		}
 		return Instance;
 	}
@@ -105,14 +105,13 @@ public:
 
 };
 
+
 Screen* Screen::Instance = nullptr;
-
-
 
 class GameObject
 {
 private:
-	char		face[100];
+	char		face[1000];
 	Position	pos;
 	Dimension	dim;
 	
@@ -131,8 +130,16 @@ public:
 	GameObject(const Position& pos, const Dimension& dim)
 		: pos(pos), screen(Screen::GetInstance()), dim(dim), input(Input::GetInstance())
 	{
+		
+	}
+
+	GameObject(const char* face)
+		: pos(pos), screen(Screen::GetInstance()), dim(dim), input(Input::GetInstance())
+	{
 
 	}
+
+
 
 	virtual ~GameObject() {}
 
@@ -166,6 +173,7 @@ public:
 	void setFace(const char* face) { strcpy(this->face, face); }
 
 	Dimension getDim() { return dim; }
+	void setDim(const Dimension& dim) { this->dim = dim; } // setter function
 
 	Screen* getScreen() { return screen; }
 };
