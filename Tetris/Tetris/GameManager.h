@@ -57,7 +57,7 @@ public:
 
 	static Screen* GetInstance() {
 		if (Instance == nullptr) {
-			Instance = new Screen(30,30);
+			Instance = new Screen(30,20);
 		}
 		return Instance;
 	}
@@ -124,22 +124,17 @@ public:
 	GameObject(const char* face, const Position& pos, const Dimension& dim)
 		: pos(pos), screen(Screen::GetInstance()), dim(dim), input(Input::GetInstance())
 	{
-		setFace(face);
+	  setFace(face);
 	}
 
 	GameObject(const Position& pos, const Dimension& dim)
 		: pos(pos), screen(Screen::GetInstance()), dim(dim), input(Input::GetInstance())
-	{
-		
-	}
+	{ setFace(""); }
 
-	GameObject(const char* face)
-		: pos(pos), screen(Screen::GetInstance()), dim(dim), input(Input::GetInstance())
-	{
-
-	}
-
-
+	GameObject()
+		: face(" "), pos({5,1}), dim({ 1,1 }), 
+		screen(Screen::GetInstance()), input(Input::GetInstance())
+	{}
 
 	virtual ~GameObject() {}
 
@@ -163,6 +158,9 @@ public:
 		if (input->getKey(VK_RIGHT)) {
 			if (pos.x >= (screen->getWidth() - 1)) return;
 			pos.x = (pos.x + 1) % (screen->getWidth());
+		}
+		if (input->getKey(VK_UP)) {
+
 		}
 	}
 

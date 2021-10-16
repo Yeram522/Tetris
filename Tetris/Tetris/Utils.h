@@ -13,9 +13,8 @@ struct Position {
 	
 };
 
-
-
 typedef Position Dimension;
+typedef Position Metrix;
 
 class Borland {
 
