@@ -3,9 +3,7 @@
 #endif
 
 #include "GameManager.h"
-#include <string>
 #include <vector>
-
 
 using namespace std;
 
@@ -210,13 +208,13 @@ private:
 	UI scoreboard;
 	UI nextblockcard;
 	Block* block;
+	GameObject stackedblocks;
 
 public:
 	Tetris()
 		:GameObject("",{0,0},{30,30}) , block(Block::GetInstance())
-		, gamescreen({0,0} ,{10,20}), scoreboard({ 13, 1 }, { 7,3 }), nextblockcard( {13,5} , {6,4} )
+		, gamescreen({0,0} ,{12,22}), scoreboard({ 13, 1 }, { 7,3 }), nextblockcard( {13,5} , {6,4} )
 	{
-
 	}
 	void draw() override
 	{
@@ -230,15 +228,22 @@ public:
 	void update() override
 	{
 		if (input->getKey(VK_LEFT)) {
-			if (block->getPos().x <= 0) return;
+			if (gamescreen.getPos().x+1 >= block->getPos().x) return;
 			block->setPos({ (block->getPos().x - 1) % (screen->getWidth()), block->getPos().y });
 		}
 		if (input->getKey(VK_RIGHT)) {
-			if (block->getPos().x >= (screen->getWidth() - 1)) return;
+			if (gamescreen.getPos().x + gamescreen.getDim().x - block->getDim().x - 1 <= block->getPos().x) return;
 			block->setPos({ (block->getPos().x + 1) % (screen->getWidth()), block->getPos().y });
 		}
 		if (input->getKey(VK_UP)) {
 			block->rotateBlock();
+		}
+		if (input->getKey(VK_DOWN)) {
+			if (gamescreen.getDim().y - block->getDim().y - 1 <= block->getPos().y) return;
+			block->setPos({ block->getPos().x , block->getPos().y+1 });
+		}
+		if (input->getKey(VK_SPACE)) {
+			
 		}
 	}
 
@@ -256,11 +261,6 @@ int main()
 
 	Tetris tetris = Tetris();
 
-	Position pos{ 0, 0 };
-
-	UI tetrisScreen{ { 0, 0 } , {10,20} };
-	UI scoreboard{ { 13, 1 } , {7,3} };
-	UI nextblock{ { 13, 5 } , {6,4} };
 	block->changeBlockShape(BlockShape::Z);
 
 	// Game loop
@@ -269,11 +269,6 @@ int main()
 
 		screen->clear();
 
-		//tetrisScreen.draw();
-		//scoreboard.draw();
-		//nextblock.draw();
-
-		//block->draw();
 		tetris.draw();
 
 		input->readInputs();

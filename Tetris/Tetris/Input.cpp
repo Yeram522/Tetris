@@ -54,7 +54,7 @@ bool Input::getKeyUp(WORD virtualKeyCode)
 
 void Input::keyEventProc(KEY_EVENT_RECORD ker)
 {
-	Borland::gotoxy(0, 11);
+	Borland::gotoxy(0, 22);
 	printf("%s\r", blankChars);
 	switch (ker.wVirtualKeyCode) {
 	case VK_LBUTTON:
@@ -84,7 +84,7 @@ void Input::keyEventProc(KEY_EVENT_RECORD ker)
 
 void Input::mouseEventProc(MOUSE_EVENT_RECORD mer)
 {
-	Borland::gotoxy(0, 12);
+	Borland::gotoxy(0, 22);
 	printf("%s\r", blankChars);
 #ifndef MOUSE_HWHEELED
 #define MOUSE_HWHEELED 0x0008
@@ -128,7 +128,7 @@ void Input::mouseEventProc(MOUSE_EVENT_RECORD mer)
 
 void Input::resizeEventProc(WINDOW_BUFFER_SIZE_RECORD wbsr)
 {
-	Borland::gotoxy(0, 13);
+	Borland::gotoxy(0, 22);
 	printf("%s\r", blankChars);
 	printf("Resize event: ");
 	printf("Console screen buffer is %d columns by %d rows.\n", wbsr.dwSize.X, wbsr.dwSize.Y);

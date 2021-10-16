@@ -8,7 +8,6 @@
 #include <cstring> // string.h
 #include <cstdlib> // stdlib.h
 #include <string>
-#include <string> // c++ string class
 #include <Windows.h>
 #include "Input.h"
 
@@ -57,7 +56,7 @@ public:
 
 	static Screen* GetInstance() {
 		if (Instance == nullptr) {
-			Instance = new Screen(30,20);
+			Instance = new Screen(30,23);
 		}
 		return Instance;
 	}
