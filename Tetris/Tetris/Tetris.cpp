@@ -119,70 +119,46 @@ private:
 		return (size_t)(getDim().x) * mt.x + mt.y;
 	}
 
-	int sizeN(const Dimension& dim)//NXM의 값 중 더 큰 값을 반환한다.
+	int sizeN(const Dimension& dim)//NXM의 값 중 더 큰 값을 반환한다. 함수명 다시 짓기.
 	{ return (dim.x < dim.y) ? dim.y : dim.x; }
 
+	bool isBlockI()
+	{
+		if ((getDim().x == 4 && getDim().y == 1) || (getDim().x == 1 && getDim().y == 4))
+		{
+			this->setDim({ getDim().y, getDim().x }); //회전하면 행,열의 크기가 바뀜
+			return true;
+		}
+		return false;
+	}
 
 	void rotate()
 	{
-		//char* shape;
-		//strcpy( shape, this->getFace());
+		//block이 I형일 경우에는 따로 처리 해준다.
+		if (isBlockI()) return;
+
 		vector<Metrix> metrix; //블록을 구성하는 *은 무조건 4개.
-
 		//N X M 행렬에서 N < M 일때 크기 조절 해서 저장해야 함.
-		
-
 		//해당 shape 검사. *가 있는 행렬 값을 metrix에 저장한다.
 		for (int i = 0; i < (size_t)(this->getDim().x * this->getDim().y); i++)
 			if (this->getFace()[i] == '*') metrix.push_back(offset2mt(i));
-
-		//행렬 회전_Metrix는 무조건 크기4개
-		Borland::gotoxy(0, 33);
-		int blocksz = metrix.size();
-		printf("*있는거 등록: %d", blocksz);
-		Borland::gotoxy(0, 0);
-
 		
 		for (int i = 0; i < 4; i++)//만약 1*4 2*3 일 경우에는 큰값으로 만들어줘야됨.
 			metrix.push_back({ metrix[i].y,(sizeN(getDim())-1) - metrix[i].x });//N X N 크기의 배열에서 회전연산.
 
-		Borland::gotoxy(0, 34);
-		blocksz = metrix.size();
-		printf("회전연산 등록: %d", blocksz);
-		Borland::gotoxy(0, 0);
-
 		metrix.erase(metrix.begin(),metrix.begin()+4);//회전 전의 값 삭제.
 
-		Borland::gotoxy(0, 35);
-		blocksz = metrix.size();
-		printf("필요없는 값 삭제 후 : %d", blocksz);
-		Borland::gotoxy(0, 0);
-
-		Dimension temp = this->getDim();
-		this->setDim({ temp.y, temp.x }); //회전하면 행,열의 크기가 바뀜.
+		this->setDim({ getDim().y, getDim().x }); //회전하면 행,열의 크기가 바뀜.
 
 		//회전후 다시 shape 구성.
 		string newshape;
 		newshape.append((size_t)(this->getDim().x * this->getDim().y),' ');//빈 문자로 채운 후
 		
-		for (int i = 0; i < metrix.size(); i++)
-		{
-			Borland::gotoxy(0, 36+i);
-			printf("for문에서 replace : %d", mt2Offset(metrix[i]));
-			Borland::gotoxy(0, 0);
-			newshape.replace(mt2Offset(metrix[i]),1,"*");//vetor에 담긴 값에 따라 * 셋팅.
-		}
-
-		Borland::gotoxy(0, 32);
-		newshape.append("+");
-		printf("%s", newshape.c_str());
-		newshape.pop_back();
-		Borland::gotoxy(0, 0);
+		for (int i = 0; i < metrix.size(); i++)//vetor에 담긴 값에 따라 * 셋팅.
+		{ newshape.replace(mt2Offset(metrix[i]), 1, "*"); }
 		
 		const char* rotatedshape = newshape.c_str();
-		this->setFace(rotatedshape);//부모클래스 face에 복사.
-
-		
+		this->setFace(rotatedshape);//부모클래스 face에 복사.		
 	}
 
 public:
