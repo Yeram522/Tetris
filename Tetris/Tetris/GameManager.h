@@ -9,6 +9,7 @@
 #include <cstdlib> // stdlib.h
 #include <string>
 #include <Windows.h>
+#include <vector>
 #include "Input.h"
 
 class Screen;
@@ -51,7 +52,6 @@ private:
 
 	static Screen* Instance;
 
-
 public:
 
 	static Screen* GetInstance() {
@@ -78,7 +78,8 @@ public:
 
 	Position offset2Pos(int offset) const
 	{
-
+		if (offset < width) return { offset, 0 };
+		return { offset % width, offset / width };
 	}
 
 	int pos2Offset(const Position& pos) const
@@ -101,6 +102,8 @@ public:
 		canvas[size - 1] = '\0';
 		printf("%s", canvas);
 	}
+
+	char* readCanvas(){ return this->canvas; }
 
 };
 
@@ -140,9 +143,14 @@ public:
 	void move(int direction)
 	{
 	}
+
 	void move()
 	{
 	}
+
+	virtual void isCollisionEnter() 
+	{ }
+
 	virtual void draw()
 	{
 		screen->draw(pos, face, dim);
@@ -163,6 +171,18 @@ public:
 		}
 	}
 
+	//vector<Position> getScreenPoses()
+	//{
+	//	vector<Position> Screenposes;
+	//	//int h = 0, int w = 0;
+	//	for (int h = 0; h <= this->getDim().y; h++)
+	//		for (int w = 0; w <= this->getDim().x; w++)
+	//			Screenposes.push_back({ w,h });
+	//						
+	//	return Screenposes;
+	//}
+	
+	
 	Position getPos() { return pos; } // getter function
 	void setPos(const Position& pos) { this->pos = pos; } // setter function
 

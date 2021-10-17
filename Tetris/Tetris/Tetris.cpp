@@ -3,7 +3,7 @@
 #endif
 
 #include "GameManager.h"
-#include <vector>
+
 
 using namespace std;
 
@@ -56,48 +56,6 @@ private:
 
 	static Block* Instance;//싱글톤 static 변수 생성
 
-	void setTypeI()//I형으로 블록을 초기화 한다.
-	{
-		setFace("****");
-		setDim({ 1,4 });
-	}
-
-	void setTypeL()//I형으로 블록을 초기화 한다.
-	{
-		setFace("*  ***");
-		setDim({ 3,2 });
-	}
-
-	void setTypeJ()//I형으로 블록을 초기화 한다.
-	{
-		setFace("  ****");
-		setDim({ 3,2 });
-	}
-
-	void setTypeT()//I형으로 블록을 초기화 한다.
-	{
-		setFace(" * ***");
-		setDim({ 3,2 });
-	}
-
-	void setTypeO()//I형으로 블록을 초기화 한다.
-	{
-		setFace("****");
-		setDim({ 2,2 });
-	}
-
-	void setTypeS()//I형으로 블록을 초기화 한다.
-	{
-		setFace(" **** ");
-		setDim({ 3,2 });
-	}
-
-	void setTypeZ()//I형으로 블록을 초기화 한다.
-	{
-		setFace("**  **");
-		setDim({ 3,2 });
-	}
-
 	Metrix offset2mt(int offset)
 	{
 		if (offset < getDim().x) return { 0 , offset };
@@ -132,9 +90,6 @@ private:
 
 	void rotate()
 	{
-		//block이 I형일 경우에는 따로 처리 해준다.
-		if (isBlockI()) return;
-
 		vector<Metrix> metrix; //블록을 구성하는 *은 무조건 4개.
 		//N X M 행렬에서 N < M 일때 크기 조절 해서 저장해야 함.
 		//해당 shape 검사. *가 있는 행렬 값을 metrix에 저장한다.
@@ -169,7 +124,29 @@ public:
 
 	void rotateBlock()
 	{
+		//block이 I형일 경우에는 따로 처리 해준다.
+		if (isBlockI()) return;
 		rotate();
+	}
+
+	vector<Position> getTargetPos2Stacked()
+	{
+		vector<Position> targetpos; //blocl의 가로길이가 곧 바닥과 부딫힐 블록의 수/길이이다.
+		targetpos.resize(getDim().x);//바뀐 dimesion에 따라 targetpos도 조정.
+		//targetpos 값 갱신 후 반환한다.	
+		//int temp = 0;
+		/*for (auto iter = targetpos.begin(); iter <= targetpos.end(); iter++)
+		{
+			*iter = { getPos().x + temp, getPos().y + getDim().y - 1 };
+			temp++;
+		}*/
+
+		for (int i = 0; i < targetpos.size(); i++)
+		{
+			targetpos[i] = { getPos().x + i, getPos().y + getDim().y - 1 };
+		}
+			
+		return targetpos;
 	}
 
 	void changeBlockShape(BlockShape enumshape)
@@ -177,27 +154,34 @@ public:
 		switch (enumshape)
 		{
 		case I:
-			this->setTypeI();
+			setFace("****");
+			setDim({ 1,4 });
 			break;
 		case L:
-			this->setTypeL();
+			setFace("*  ***");
+			setDim({ 3,2 });
 			break;
 		case J:
-			this->setTypeJ();
+			setFace("  ****");
+			setDim({ 3,2 });
 			break;
 		case T:
-			this->setTypeT();
+			setFace(" * ***");
+			setDim({ 3,2 });
 			break;
 		case O:
-			this->setTypeO();
+			setFace("****");
+			setDim({ 2,2 });
 			break;
 		case S:
-			this->setTypeS();
+			setFace(" **** ");
+			setDim({ 3,2 });
 			break;
 		case Z:
-			this->setTypeZ();
+			setFace("**  **");
+			setDim({ 3,2 });
 			break;
-		}
+		}		
 	}
 };
 
@@ -208,21 +192,55 @@ private:
 	UI scoreboard;
 	UI nextblockcard;
 	Block* block;
-	GameObject stackedblocks;
+	GameObject stackedblocks; // 밑에 적재된 블록. vector 사용. 가변적임.
 
 public:
 	Tetris()
 		:GameObject("",{0,0},{30,30}) , block(Block::GetInstance())
 		, gamescreen({0,0} ,{12,22}), scoreboard({ 13, 1 }, { 7,3 }), nextblockcard( {13,5} , {6,4} )
 	{
+		stackedblocks.setFace("**********");
+		stackedblocks.setPos({gamescreen.getPos().x + 1, gamescreen.getDim().y - 2});
+		stackedblocks.setDim({ 10, 1 });
 	}
+
+	void stackBlock()
+	{
+		//string을 char*로 변환해서 gameobject face를 변경한다.
+	}
+
+	void isCollisionEnter() override //충돌은 world position에 기반된다.
+	{
+		//vector<Position> screenposes = stackedblocks.getScreenPoses();
+		//stackedblocks의 크기 pos값의 
+		//Block::getTargetPos2Stacked()의 타겟범위내에서 screen[offset]== '*'을 찾는다.
+		for (int dh = block->getTargetPos2Stacked().front().y+1; dh <= block->getTargetPos2Stacked().back().y+1; dh++)
+			for (int dw = block->getTargetPos2Stacked().front().x; dw <= block->getTargetPos2Stacked().back().x; dw++)
+				if (screen->readCanvas()[screen->pos2Offset({ dw,dh })] == '*')
+				{
+					Borland::gotoxy(0, 36);
+					printf("충돌! %d %d", dw, dh);
+					Borland::gotoxy(0, 0);
+					return;
+				}
+				else {
+					Borland::gotoxy(0, 37);
+					printf("scrren:%d %d", dw, dh);
+					Borland::gotoxy(0, 38);
+					printf("block: %d %d", block->getPos().x, block->getPos().y);
+					Borland::gotoxy(0, 0);
+				}
+		
+	}
+
 	void draw() override
 	{
 		gamescreen.draw();
 		scoreboard.draw();
 		nextblockcard.draw();
-
+		stackedblocks.draw();
 		block->draw();
+		
 	}
 
 	void update() override
@@ -245,6 +263,8 @@ public:
 		if (input->getKey(VK_SPACE)) {
 			
 		}
+
+		isCollisionEnter();
 	}
 
 };
