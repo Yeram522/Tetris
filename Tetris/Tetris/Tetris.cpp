@@ -35,6 +35,11 @@ public: //배치 할 위치, 생성할 박스 크기를 넣으면 스크린에 �
 		const char* testline = line.c_str();
 		setFace(testline);//부모클래스 face에 복사.
 	}
+
+	void update()
+	{
+
+	}
 };
 
 enum BlockShape
@@ -123,6 +128,11 @@ public:
 		return Instance;
 	}
 
+	void move() override
+	{
+		this->setPos({ this->getPos().x , this->getPos().y + 1 });
+	}
+
 	void rotateBlock()
 	{
 		//block이 I형일 경우에는 따로 처리 해준다.
@@ -203,6 +213,7 @@ private:
 	Block* block;
 	GameObject stackedblocks; // 밑에 적재된 블록. vector 사용. 가변적임.
 	int pastDim;
+	int linepoint;
 
 public:
 	Tetris()
@@ -232,6 +243,7 @@ public:
 		else
 			stackedblocks.setDim({ 10, stackedblocks.getDim().y - deletecount });
 		stackedblocks.setPos({ stackedblocks.getPos().x , stackedblocks.getPos().y + deletecount});
+		linepoint += deletecount;
 	}
 	
 	//save the block when crash with other stacked blocks.
@@ -319,6 +331,12 @@ public:
 		return false;
 
 	}
+
+	void autoMoveBlock()
+	{
+		if (checkDownCollision()) return;
+		block->move();
+	}
 	
 	//check overlap '*'point per prame and recover hided shape.
 	void overlapBlock()
@@ -391,7 +409,7 @@ public:
 			block->setPos({ block->getPos().x , block->getPos().y+1 });
 		}
 		if (input->getKey(VK_SPACE)) {
-			
+			// immediately move to the bottom
 		}
 
 		clearBlocks();
@@ -428,6 +446,8 @@ int main()
 		tetris.update();
 
 		screen->render();
+
+		tetris.autoMoveBlock();
 
 		Sleep(100);
 

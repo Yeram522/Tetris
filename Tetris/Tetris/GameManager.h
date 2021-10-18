@@ -145,8 +145,9 @@ public:
 	{
 	}
 
-	void move()
+	virtual void move()
 	{
+		
 	}
 
 	virtual void draw()
