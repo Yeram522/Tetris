@@ -1,6 +1,2 @@
-﻿  Input.cpp
-D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\Tetris\Input.cpp(26,20): warning C4018: '<': signed/unsigned mismatch
-D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\Tetris\Input.cpp(42,20): warning C4018: '<': signed/unsigned mismatch
-  Tetris.cpp
-  Generating Code...
+﻿  Tetris.cpp
   Tetris.vcxproj -> D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\x64\Debug\Tetris.exe

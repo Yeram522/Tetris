@@ -104,6 +104,7 @@ public:
 	}
 
 	char* readCanvas(){ return this->canvas; }
+	void writeCanvas(int index, const char shape) { canvas[index] = shape; }
 
 };
 
@@ -148,8 +149,10 @@ public:
 	{
 	}
 
-	virtual void isCollisionEnter()
-	{}
+	virtual bool processCollisionEnter(WORD virtualKeyCode)
+	{
+		return false;
+	}
 
 	virtual void draw()
 	{
