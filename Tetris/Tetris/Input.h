@@ -68,8 +68,8 @@ public:
 		}
 		if (cNumRead == 0) return;
 
-		Borland::gotoxy(0, 14);
-		printf("number of inputs %d\n", cNumRead);
+		//Borland::gotoxy(0, 14);
+		//printf("number of inputs %d\n", cNumRead);
 
 		if (!ReadConsoleInput(
 			hStdin,      // input buffer handle
@@ -108,7 +108,7 @@ public:
 		}
 #endif 
 
-		Borland::gotoxy(0, 0);
+		//Borland::gotoxy(0, 0);
 	}
 	bool getKeyDown(WORD virtualKeyCode);
 	bool getKey(WORD virtualKeyCode);

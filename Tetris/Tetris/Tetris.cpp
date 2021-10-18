@@ -202,79 +202,103 @@ private:
 	UI nextblockcard;
 	Block* block;
 	GameObject stackedblocks; // 밑에 적재된 블록. vector 사용. 가변적임.
+	int pastDim;
 
 public:
 	Tetris()
 		:GameObject("", { 0,0 }, { 30,30 }), block(Block::GetInstance())
 		, gamescreen({0,0} ,{12,22}), scoreboard({ 13, 1 }, { 7,3 }), nextblockcard( {13,5} , {6,4} )
 	{
-		stackedblocks.setFace("**********");
+		stackedblocks.setFace("          ");
 		stackedblocks.setDim({ 10, 1 });
 		stackedblocks.setPos({gamescreen.getPos().x + 1, gamescreen.getDim().y - stackedblocks.getDim().y - 1});
-		
+		pastDim = stackedblocks.getDim().y;
 	}
 
 	
 	//save the block when crash with other stacked blocks.
 	void stackBlock()
 	{
-		int newDim = gamescreen.getDim().y - block->getPos().y + 1;
-		stackedblocks.setDim({ 10, newDim }); //resize h capacity
-
+		int newDim;
+		int hp;
+		if (pastDim < gamescreen.getDim().y - block->getPos().y + 1)
+		{
+			newDim = gamescreen.getDim().y - block->getPos().y + 1;
+			pastDim = newDim;
+			hp = block->getPos().y;
+		}
+		else
+		{
+			newDim = pastDim;
+			hp = stackedblocks.getPos().y;
+		}
+		
+		//resize h capacity
+		stackedblocks.setDim({ 10, newDim }); 
+		stackedblocks.setPos({ gamescreen.getPos().x + 1, hp });
 		string staticblocks;
 	   //just get the screen canvas and save the blocks status.
-		for (int hp = block->getPos().y; hp <= stackedblocks.getPos().y; hp++)
+		for (hp ; hp <= 22; hp++)
 			for (int wp = stackedblocks.getPos().x; wp < stackedblocks.getPos().x + 10; wp++)
 				staticblocks.push_back(screen->readCanvas()[screen->pos2Offset({wp,hp})]);
 
-		stackedblocks.setPos({ gamescreen.getPos().x + 1, block->getPos().y });
+		
 		const char* newshape = staticblocks.c_str();
 		stackedblocks.setFace(newshape);
 
-		block->setPos({ 5,1 });
+		block->setPos({ 5,1 });//resetposition of singlton block.
+		//set different shape of block of random.	
 	}
 
 
 	//process collision by key down condition
-	void checkLeftCollision()
+	bool checkLeftCollision()
 	{
 		int dw = block->getColliderPoses(VK_LEFT).front().x;
 		for (int dh = block->getColliderPoses(VK_LEFT).front().y; dh <= block->getColliderPoses(VK_LEFT).back().y; dh++)
 			if (screen->readCanvas()[screen->pos2Offset({ dw - 1 ,dh })] == '*' /*target stacked block*/
 				&& screen->readCanvas()[screen->pos2Offset({ dw ,dh })] == '*') /*singleton Block, can move*/
 			{
+				return true;
 				Borland::gotoxy(0, 36);
 				printf("LEFT 충돌");
 				Borland::gotoxy(0, 0);
 			}
-
+		return false;
 	}
 
-	void checkRightCollision()
+	bool checkRightCollision()
 	{
 		int dw = block->getColliderPoses(VK_RIGHT).front().x;
 		for (int dh = block->getColliderPoses(VK_RIGHT).front().y; dh <= block->getColliderPoses(VK_RIGHT).back().y; dh++)
 			if (screen->readCanvas()[screen->pos2Offset({ dw + 1 ,dh })] == '*' /*target stacked block*/
 				&& screen->readCanvas()[screen->pos2Offset({ dw ,dh })] == '*') /*singleton Block, can move*/
 			{
+				return true;
 				Borland::gotoxy(0, 36);
 				printf("RIGHT 충돌");
 				Borland::gotoxy(0, 0);
 			}
+		return false;
 	}
 
-	void checkDownCollision()
+	bool checkDownCollision()
 	{
 		int dh = block->getColliderPoses(VK_DOWN).front().y;
 		for (int dw = block->getColliderPoses(VK_DOWN).front().x; dw <= block->getColliderPoses(VK_DOWN).back().x; dw++)
-			if (screen->readCanvas()[screen->pos2Offset({ dw ,dh + 1 })] == '*' /*target stacked block*/
+			if ((screen->readCanvas()[screen->pos2Offset({ dw ,dh + 1 })] == '*' || screen->readCanvas()[screen->pos2Offset({ dw ,dh + 1 })] == '-') /*target stacked block*/
 				&& screen->readCanvas()[screen->pos2Offset({ dw ,dh })] == '*') /*singleton Block, can move*/
 			{
 				stackBlock();
+				
 				Borland::gotoxy(0, 36);
 				printf("충돌");
 				Borland::gotoxy(0, 0);
+
+				return true;
 			}
+
+		return false;
 
 	}
 	
@@ -296,7 +320,13 @@ public:
 					Borland::gotoxy(0, 36);
 					printf("겹침");
 					Borland::gotoxy(0, 0);
-				}		
+					
+				}	
+
+		Borland::gotoxy(0, 36);
+		printf("     ");
+		Borland::gotoxy(0, 0);
+		
 	}
 
 	int findLocalIndex(const vector<Position> &arr, const Position pos)
@@ -322,27 +352,26 @@ public:
 
 	void update() override
 	{
-		checkDownCollision();
-		checkLeftCollision();
-		checkRightCollision();
+		//checkDownCollision();
 
 		overlapBlock();
 
 		if (input->getKey(VK_LEFT)) {
 			if (gamescreen.getPos().x+1 >= block->getPos().x) return;
-			
+			if (checkLeftCollision()) return;
 			block->setPos({ (block->getPos().x - 1) % (screen->getWidth()), block->getPos().y });
 		}
 		if (input->getKey(VK_RIGHT)) {
 			if (gamescreen.getPos().x + gamescreen.getDim().x - block->getDim().x - 1 <= block->getPos().x) return;
+			if (checkRightCollision()) return;
 			block->setPos({ (block->getPos().x + 1) % (screen->getWidth()), block->getPos().y });
 		}
 		if (input->getKey(VK_UP)) {
 			block->rotateBlock();
 		}
 		if (input->getKey(VK_DOWN)) {
+			if (checkDownCollision()) return;
 			if (gamescreen.getDim().y - block->getDim().y - 1 <= block->getPos().y) return;
-			
 			block->setPos({ block->getPos().x , block->getPos().y+1 });
 		}
 		if (input->getKey(VK_SPACE)) {
