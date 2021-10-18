@@ -51,10 +51,9 @@ enum BlockShape
 class Block : public GameObject
 {
 private:
-	bool isCollide;
 	//넣는 값에 따라 다른 종류의 블록이 만들어진다.
 	//움직일 수 있는 블록은 단 한개 존재함으로 싱클톤 형식으로 만들어본다.
-	Block() :GameObject(), isCollide(false){ }
+	Block() :GameObject(){ }
 
 	static Block* Instance;//싱글톤 static 변수 생성
 
@@ -131,18 +130,6 @@ public:
 		rotate();
 	}
 
-	void collideTriggerEnter()
-	{
-		if(isCollide==false) isCollide = true;
-		return;
-	}
-
-	void collideTriggerExit()
-	{
-		if (isCollide == true) isCollide = false;
-		return;
-	}
-
 	vector<Position> getColliderPoses(WORD virtualKeyCode)
 	{
 		vector<Position> colliderposes; //blocl의 가로길이가 곧 바닥과 부딫힐 블록의 수/길이이다.
@@ -206,13 +193,6 @@ public:
 	}
 };
 
-struct Blockmemory
-{
-	int x;
-	int y;
-	bool fusetrigger;
-	Blockmemory(int x, int y, bool fusetrigger) : x(x), y(y), fusetrigger(false) {};
-};
 
 class Tetris : public GameObject
 {
@@ -222,29 +202,40 @@ private:
 	UI nextblockcard;
 	Block* block;
 	GameObject stackedblocks; // 밑에 적재된 블록. vector 사용. 가변적임.
-	vector<Blockmemory> blockmemorys;
 
 public:
 	Tetris()
-		:GameObject("", { 0,0 }, { 30,30 }), block(Block::GetInstance()), blockmemorys()
+		:GameObject("", { 0,0 }, { 30,30 }), block(Block::GetInstance())
 		, gamescreen({0,0} ,{12,22}), scoreboard({ 13, 1 }, { 7,3 }), nextblockcard( {13,5} , {6,4} )
 	{
-		stackedblocks.setFace("         *         *");
-		stackedblocks.setDim({ 10, 2 });
+		stackedblocks.setFace("**********");
+		stackedblocks.setDim({ 10, 1 });
 		stackedblocks.setPos({gamescreen.getPos().x + 1, gamescreen.getDim().y - stackedblocks.getDim().y - 1});
 		
 	}
 
 	
-
+	//save the block when crash with other stacked blocks.
 	void stackBlock()
 	{
-		//string을 char*로 변환해서 gameobject face를 변경한다.
-		//충돌되면 실행 되므로 충돌 되었을때 block의 정보를 가져올 수 있다.
+		int newDim = gamescreen.getDim().y - block->getPos().y + 1;
+		stackedblocks.setDim({ 10, newDim }); //resize h capacity
 
+		string staticblocks;
+	   //just get the screen canvas and save the blocks status.
+		for (int hp = block->getPos().y; hp <= stackedblocks.getPos().y; hp++)
+			for (int wp = stackedblocks.getPos().x; wp < stackedblocks.getPos().x + 10; wp++)
+				staticblocks.push_back(screen->readCanvas()[screen->pos2Offset({wp,hp})]);
 
+		stackedblocks.setPos({ gamescreen.getPos().x + 1, block->getPos().y });
+		const char* newshape = staticblocks.c_str();
+		stackedblocks.setFace(newshape);
+
+		block->setPos({ 5,1 });
 	}
 
+
+	//process collision by key down condition
 	void checkLeftCollision()
 	{
 		int dw = block->getColliderPoses(VK_LEFT).front().x;
@@ -270,7 +261,6 @@ public:
 				printf("RIGHT 충돌");
 				Borland::gotoxy(0, 0);
 			}
-
 	}
 
 	void checkDownCollision()
@@ -280,55 +270,18 @@ public:
 			if (screen->readCanvas()[screen->pos2Offset({ dw ,dh + 1 })] == '*' /*target stacked block*/
 				&& screen->readCanvas()[screen->pos2Offset({ dw ,dh })] == '*') /*singleton Block, can move*/
 			{
+				stackBlock();
 				Borland::gotoxy(0, 36);
 				printf("충돌");
 				Borland::gotoxy(0, 0);
 			}
 
 	}
-	//process collision by key down condition
-
-	bool processCollisionEnter(WORD virtualKeyCode) override
-	{
-		switch (virtualKeyCode)
-		{
-		case VK_RIGHT:
-			break;
-		case VK_LEFT:
-			
-			break;
-		
-		case VK_DOWN:
-			int dh = block->getColliderPoses(VK_DOWN).front().y;
-			for (int dw = block->getColliderPoses(VK_DOWN).front().x; dw <= block->getColliderPoses(VK_DOWN).back().x; dw++)
-				if (screen->readCanvas()[screen->pos2Offset({ dw ,dh + 1 })] == '*' /*target stacked block*/
-					&& screen->readCanvas()[screen->pos2Offset({ dw ,dh })] == '*') /*singleton Block, can move*/
-				{
-					Borland::gotoxy(0, 36);
-					printf("충돌");
-					Borland::gotoxy(0, 0);
-					return false;
-				}
-			break;
-		}
-		//down arror collision judge
-		
-		return false;
-		 //overlap block hided from movalble block.
-
-		/*
-		Borland::gotoxy(0, 37);
-		printf("scrren:%d %d", dw, dh);
-        Borland::gotoxy(0, 38);
-		printf("block: %d %d", block->getPos().x, block->getPos().y);
-	    Borland::gotoxy(0, 0);
-		*/
-	}
-
-	void overlapBlock()//겹치는 이미지랜더?처리. 매 프레임 채크한다.
+	
+	//check overlap '*'point per prame and recover hided shape.
+	void overlapBlock()
 	{
 		vector<Position> stackedblocksScreenposes;
-	    //int h = 0, int w = 0;
 	    for (int h = stackedblocks.getPos().y; h < stackedblocks.getPos().y + stackedblocks.getDim().y; h++)
 			for (int w = stackedblocks.getPos().x; w < stackedblocks.getPos().x + stackedblocks.getDim().x; w++)
 				stackedblocksScreenposes.push_back({ w,h });

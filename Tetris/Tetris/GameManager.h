@@ -149,11 +149,6 @@ public:
 	{
 	}
 
-	virtual bool processCollisionEnter(WORD virtualKeyCode)
-	{
-		return false;
-	}
-
 	virtual void draw()
 	{
 		screen->draw(pos, face, dim);

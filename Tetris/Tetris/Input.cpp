@@ -54,7 +54,7 @@ bool Input::getKeyUp(WORD virtualKeyCode)
 
 void Input::keyEventProc(KEY_EVENT_RECORD ker)
 {
-	Borland::gotoxy(0, 22);
+	//Borland::gotoxy(0, 22);
 	printf("%s\r", blankChars);
 	switch (ker.wVirtualKeyCode) {
 	case VK_LBUTTON:
@@ -79,7 +79,7 @@ void Input::keyEventProc(KEY_EVENT_RECORD ker)
 		break;
 	}
 
-	Borland::gotoxy(0, 0);
+	//Borland::gotoxy(0, 0);
 }
 
 void Input::mouseEventProc(MOUSE_EVENT_RECORD mer)
