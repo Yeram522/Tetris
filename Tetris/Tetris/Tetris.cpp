@@ -215,9 +215,27 @@ public:
 		pastDim = stackedblocks.getDim().y;
 	}
 
+	//clear blocks 
+	void clearBlocks()
+	{
+		//stackedblocks의 dim.y 만큼 검사한다.
+		int deletecount = 0;
+		string strblocks(stackedblocks.getFace());
+		for (int dh = 0; dh < stackedblocks.getDim().y; dh++)
+			if (strblocks.substr(dh*10, 10) == "**********")
+			{
+				strblocks.erase(dh * 10, dh + 9);
+				deletecount++;
+			}
+		stackedblocks.setFace(strblocks.c_str());
+		if(stackedblocks.getDim().y - deletecount == 0) stackedblocks.setDim({ 10, 1 });
+		else
+			stackedblocks.setDim({ 10, stackedblocks.getDim().y - deletecount });
+		stackedblocks.setPos({ stackedblocks.getPos().x , stackedblocks.getPos().y + deletecount});
+	}
 	
 	//save the block when crash with other stacked blocks.
-	void stackBlock()
+	void stackBlocks()
 	{
 		int newDim;
 		int hp;
@@ -289,7 +307,7 @@ public:
 			if ((screen->readCanvas()[screen->pos2Offset({ dw ,dh + 1 })] == '*' || screen->readCanvas()[screen->pos2Offset({ dw ,dh + 1 })] == '-') /*target stacked block*/
 				&& screen->readCanvas()[screen->pos2Offset({ dw ,dh })] == '*') /*singleton Block, can move*/
 			{
-				stackBlock();
+				stackBlocks();
 				
 				Borland::gotoxy(0, 36);
 				printf("충돌");
@@ -352,8 +370,6 @@ public:
 
 	void update() override
 	{
-		//checkDownCollision();
-
 		overlapBlock();
 
 		if (input->getKey(VK_LEFT)) {
@@ -377,6 +393,8 @@ public:
 		if (input->getKey(VK_SPACE)) {
 			
 		}
+
+		clearBlocks();
 	}
 
 };
