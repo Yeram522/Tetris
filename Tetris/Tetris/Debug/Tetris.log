@@ -1,5 +1,6 @@
 ﻿  Tetris.cpp
-D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\Tetris\Tetris.cpp(96,21): warning C4018: '<': signed/unsigned mismatch
-D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\Tetris\Tetris.cpp(110,21): warning C4018: '<': signed/unsigned mismatch
-D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\Tetris\Tetris.cpp(144,21): warning C4018: '<': signed/unsigned mismatch
+D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\Tetris\Tetris.cpp(98,21): warning C4018: '<': signed/unsigned mismatch
+D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\Tetris\Tetris.cpp(112,21): warning C4018: '<': signed/unsigned mismatch
+D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\Tetris\Tetris.cpp(151,21): warning C4018: '<': signed/unsigned mismatch
+D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\Tetris\Tetris.cpp(280,22): warning C4018: '<': signed/unsigned mismatch
   Tetris.vcxproj -> D:\1_2021\2021-Univ-Fall-Term\03.객체지향프로그래밍(2)\02.과제\Tetris\Tetris\Debug\Tetris.exe

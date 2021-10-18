@@ -148,8 +148,8 @@ public:
 	{
 	}
 
-	virtual void isCollisionEnter() 
-	{ }
+	virtual void isCollisionEnter()
+	{}
 
 	virtual void draw()
 	{

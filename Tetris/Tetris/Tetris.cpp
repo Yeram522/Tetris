@@ -3,6 +3,7 @@
 #endif
 
 #include "GameManager.h"
+#include <algorithm>
 
 
 using namespace std;
@@ -50,9 +51,10 @@ enum BlockShape
 class Block : public GameObject
 {
 private:
+	bool isCollide;
 	//넣는 값에 따라 다른 종류의 블록이 만들어진다.
 	//움직일 수 있는 블록은 단 한개 존재함으로 싱클톤 형식으로 만들어본다.
-	Block() :GameObject(){ }
+	Block() :GameObject(), isCollide(false){ }
 
 	static Block* Instance;//싱글톤 static 변수 생성
 
@@ -129,24 +131,29 @@ public:
 		rotate();
 	}
 
-	vector<Position> getTargetPos2Stacked()
+	void collideTriggerEnter()
 	{
-		vector<Position> targetpos; //blocl의 가로길이가 곧 바닥과 부딫힐 블록의 수/길이이다.
-		targetpos.resize(getDim().x);//바뀐 dimesion에 따라 targetpos도 조정.
-		//targetpos 값 갱신 후 반환한다.	
-		//int temp = 0;
-		/*for (auto iter = targetpos.begin(); iter <= targetpos.end(); iter++)
-		{
-			*iter = { getPos().x + temp, getPos().y + getDim().y - 1 };
-			temp++;
-		}*/
+		if(isCollide==false) isCollide = true;
+		return;
+	}
 
-		for (int i = 0; i < targetpos.size(); i++)
+	void collideTriggerExit()
+	{
+		if (isCollide == true) isCollide = false;
+		return;
+	}
+
+	vector<Position> getColliderPoses()
+	{
+		vector<Position> colliderposes; //blocl의 가로길이가 곧 바닥과 부딫힐 블록의 수/길이이다.
+		colliderposes.resize(getDim().x);//바뀐 dimesion에 따라 targetpos도 조정.
+		//targetpos 값 갱신 후 반환한다.	
+		for (int i = 0; i < colliderposes.size(); i++)
 		{
-			targetpos[i] = { getPos().x + i, getPos().y + getDim().y - 1 };
+			colliderposes[i] = { getPos().x + i, getPos().y + getDim().y - 1 };
 		}
 			
-		return targetpos;
+		return colliderposes;
 	}
 
 	void changeBlockShape(BlockShape enumshape)
@@ -185,6 +192,14 @@ public:
 	}
 };
 
+struct Blockmemory
+{
+	int x;
+	int y;
+	bool fusetrigger;
+	Blockmemory(int x, int y, bool fusetrigger) : x(x), y(y), fusetrigger(false) {};
+};
+
 class Tetris : public GameObject
 {
 private:
@@ -193,20 +208,27 @@ private:
 	UI nextblockcard;
 	Block* block;
 	GameObject stackedblocks; // 밑에 적재된 블록. vector 사용. 가변적임.
+	vector<Blockmemory> blockmemorys;
 
 public:
 	Tetris()
-		:GameObject("",{0,0},{30,30}) , block(Block::GetInstance())
+		:GameObject("", { 0,0 }, { 30,30 }), block(Block::GetInstance()), blockmemorys()
 		, gamescreen({0,0} ,{12,22}), scoreboard({ 13, 1 }, { 7,3 }), nextblockcard( {13,5} , {6,4} )
 	{
-		stackedblocks.setFace("**********");
-		stackedblocks.setPos({gamescreen.getPos().x + 1, gamescreen.getDim().y - 2});
-		stackedblocks.setDim({ 10, 1 });
+		stackedblocks.setFace("*         *         ");
+		stackedblocks.setDim({ 10, 2 });
+		stackedblocks.setPos({gamescreen.getPos().x + 1, gamescreen.getDim().y - stackedblocks.getDim().y - 1});
+		
 	}
+
+	
 
 	void stackBlock()
 	{
 		//string을 char*로 변환해서 gameobject face를 변경한다.
+		//충돌되면 실행 되므로 충돌 되었을때 block의 정보를 가져올 수 있다.
+
+
 	}
 
 	void isCollisionEnter() override //충돌은 world position에 기반된다.
@@ -214,23 +236,54 @@ public:
 		//vector<Position> screenposes = stackedblocks.getScreenPoses();
 		//stackedblocks의 크기 pos값의 
 		//Block::getTargetPos2Stacked()의 타겟범위내에서 screen[offset]== '*'을 찾는다.
-		for (int dh = block->getTargetPos2Stacked().front().y+1; dh <= block->getTargetPos2Stacked().back().y+1; dh++)
-			for (int dw = block->getTargetPos2Stacked().front().x; dw <= block->getTargetPos2Stacked().back().x; dw++)
-				if (screen->readCanvas()[screen->pos2Offset({ dw,dh })] == '*')
+		int dh = block->getColliderPoses().front().y;
+		for (int dw = block->getColliderPoses().front().x; dw <= block->getColliderPoses().back().x; dw++)
+			if (screen->readCanvas()[screen->pos2Offset({ dw ,dh + 1 })] == '*' /*target stacked block*/
+				&& screen->readCanvas()[screen->pos2Offset({ dw ,dh })] == '*') /*singleton Block, can move*/
+			{
+				Borland::gotoxy(0, 36);
+				printf("충돌");
+				Borland::gotoxy(0, 0);
+			}
+			else {
+				Borland::gotoxy(0, 37);
+				printf("scrren:%d %d", dw, dh);
+				Borland::gotoxy(0, 38);
+				printf("block: %d %d", block->getPos().x, block->getPos().y);
+				Borland::gotoxy(0, 0);
+			}
+		fuseblock();
+	}
+
+	void fuseblock()//겹치는 이미지랜더?처리. 매 프레임 채크한다.
+	{
+		vector<Position> stackedblocksScreenposes;
+	    //int h = 0, int w = 0;
+	    for (int h = stackedblocks.getPos().y; h < stackedblocks.getPos().y + stackedblocks.getDim().y; h++)
+			for (int w = stackedblocks.getPos().x; w < stackedblocks.getPos().x + stackedblocks.getDim().x; w++)
+				stackedblocksScreenposes.push_back({ w,h });
+
+		for (int h = this->getPos().y; h < this->getPos().y + this->getDim().y; h++)
+			for (int w = this->getPos().x; w < this->getPos().x + this->getDim().x; w++)
+				if (screen->readCanvas()[screen->pos2Offset({ w ,h })] == ' ' &&
+					stackedblocks.getFace()[findLocalIndex(stackedblocksScreenposes, { w ,h })] == '*')
 				{
+					//스크린엔 빈칸으로 보이지만,ㅡ 그위치에 쌓인 블록정보가 있으면 겹친것!
 					Borland::gotoxy(0, 36);
-					printf("충돌! %d %d", dw, dh);
+					printf("겹침");
 					Borland::gotoxy(0, 0);
-					return;
-				}
-				else {
-					Borland::gotoxy(0, 37);
-					printf("scrren:%d %d", dw, dh);
-					Borland::gotoxy(0, 38);
-					printf("block: %d %d", block->getPos().x, block->getPos().y);
-					Borland::gotoxy(0, 0);
-				}
-		
+				}		
+	}
+
+	int findLocalIndex(const vector<Position> &arr, const Position pos)
+	{
+		for (auto i = 0; i < arr.size(); i++) {
+			if (arr[i].x == pos.x && arr[i].y == pos.y)
+			{
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	void draw() override
@@ -258,13 +311,12 @@ public:
 		}
 		if (input->getKey(VK_DOWN)) {
 			if (gamescreen.getDim().y - block->getDim().y - 1 <= block->getPos().y) return;
+			
 			block->setPos({ block->getPos().x , block->getPos().y+1 });
 		}
 		if (input->getKey(VK_SPACE)) {
 			
 		}
-
-		isCollisionEnter();
 	}
 
 };
@@ -291,11 +343,14 @@ int main()
 
 		tetris.draw();
 
+		tetris.isCollisionEnter();
+		//--------------------------
 		input->readInputs();
 
 		tetris.update();
 
 		screen->render();
+
 		Sleep(100);
 
 	}
