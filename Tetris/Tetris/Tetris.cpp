@@ -48,13 +48,13 @@ public: //배치 할 위치, 생성할 박스 크기를 넣으면 스크린에 �
 
 enum BlockShape
 {
-	I = 73,
-	L = 108,
-	J = 106,
-	T = 116,
-	O = 111,
-	S = 115,
-	Z = 122 //문자를 10진수 아스키코드로 표현
+	I = 0,
+	L = 1,
+	J = 2,
+	T = 3,
+	O = 4,
+	S = 5,
+	Z = 6 //문자를 10진수 아스키코드로 표현
 };
 
 class Block : public GameObject
@@ -221,17 +221,21 @@ private:
 	int score;
 	int linepoint;
 	int speed;
-
+	//nextblockcard
+	GameObject nextblock;
+	int randomshape;
 public:
 	Tetris()
 		:GameObject("", { 0,0 }, { 30,30 }), block(Block::GetInstance())
 		, gamescreen({ 0,0 }, { 12,22 }), scoreboard({ 13, 1 }, { 15,5 }), nextblockcard({ 13,7 }, { 8,6 })
-		, score(0), linepoint(0), speed(1000)
+		, nextblock({ 16,8 }, { 4,4 }), score(0), linepoint(0), speed(1000)
 	{
 		stackedblocks.setFace("          ");
 		stackedblocks.setDim({ 10, 1 });
 		stackedblocks.setPos({gamescreen.getPos().x + 1, gamescreen.getDim().y - stackedblocks.getDim().y - 1});
 		pastDim = stackedblocks.getDim().y;
+
+		creatNextRandomBlock();
 	}
 
 	void updateScoreBoard()
@@ -250,34 +254,76 @@ public:
 		scoreboard.updateText();
 	}
 	
+	void creatNextRandomBlock()//creat next block to show UI in advance
+	{
+		randomshape = rand() % 6;	
+		switch (BlockShape(randomshape))
+		{
+		case I:
+			nextblock.setFace("****");
+			nextblock.setDim({ 1,4 });
+			break;
+		case L:
+			nextblock.setFace("*  ***");
+			nextblock.setDim({ 3,2 });
+			break;
+		case J:
+			nextblock.setFace("  ****");
+			nextblock.setDim({ 3,2 });
+			break;
+		case T:
+			nextblock.setFace(" * ***");
+			nextblock.setDim({ 3,2 });
+			break;
+		case O:
+			nextblock.setFace("****");
+			nextblock.setDim({ 2,2 });
+			break;
+		case S:
+			nextblock.setFace(" **** ");
+			nextblock.setDim({ 3,2 });
+			break;
+		case Z:
+			nextblock.setFace("**  **");
+			nextblock.setDim({ 3,2 });
+			break;
+		}
+	}
+
+	void creatNewBlock()//not real creating, just change the position of drawing looks like it created.
+	{
+		block->setPos({ 5,1 });//resetposition of singlton block.
+		block->changeBlockShape(BlockShape(randomshape));
+
+		creatNextRandomBlock();
+	}
 	//clear blocks 
 	void clearBlocks()
 	{
 		//stackedblocks의 dim.y 만큼 검사한다.
 		int deletecount = 0;
-		vector<int> toeraseliney;
 		string strblocks(stackedblocks.getFace());
 		for (int dh = 0; dh < stackedblocks.getDim().y; dh++)
 			if (strblocks.substr(dh*10, 10) == "**********")
-			{
-				
-				//if blocks ared erased middle position
-				if (dh != 0)//dh==0 -> bottom position.y of blocks 
-				{
-					toeraseliney.push_back(dh);
-				}
+			{		
+
+				strblocks.erase(dh * 10, 10);
+				dh--;
+
 				deletecount++;
 			}
 
-		for (int i = 0; i < deletecount; i++)
-		{
-			strblocks.erase(toeraseliney[i] * 10, 10);
-		}
+		if (deletecount == 0) return;
+
+		strblocks.resize((stackedblocks.getDim().y - deletecount)*10);
 		stackedblocks.setFace(strblocks.c_str());
+
 		if(stackedblocks.getDim().y - deletecount == 0) stackedblocks.setDim({ 10, 1 });
 		else
-			stackedblocks.setDim({ 10, stackedblocks.getDim().y  - deletecount});
-		stackedblocks.setPos({ stackedblocks.getPos().x , stackedblocks.getPos().y + deletecount });
+			stackedblocks.setDim({ 10, stackedblocks.getDim().y  - deletecount });
+
+		stackedblocks.setPos({ stackedblocks.getPos().x , stackedblocks.getPos().y + deletecount});
+
 		linepoint += deletecount;
 		score += 10 * deletecount;
 	}
@@ -287,9 +333,9 @@ public:
 	{
 		int newDim;
 		int hp;
-		if (pastDim < gamescreen.getDim().y - block->getPos().y + 1)
+		if (pastDim < gamescreen.getDim().y - block->getPos().y )
 		{
-			newDim = gamescreen.getDim().y - block->getPos().y + 1;
+			newDim = gamescreen.getDim().y - block->getPos().y ;
 			pastDim = newDim;
 			hp = block->getPos().y;
 		}
@@ -312,8 +358,10 @@ public:
 		const char* newshape = staticblocks.c_str();
 		stackedblocks.setFace(newshape);
 
-		block->setPos({ 5,1 });//resetposition of singlton block.
-		//set different shape of block of random.	
+		//block->setPos({ 5,1 });//resetposition of singlton block.
+		clearBlocks();
+		//set different shape of block of random.
+		creatNewBlock();
 	}
 
 
@@ -415,11 +463,14 @@ public:
 
 	void draw() override
 	{
+
 		gamescreen.draw();
 		scoreboard.draw();
 		nextblockcard.draw();
 		stackedblocks.draw();
 		block->draw();
+		nextblock.draw();
+		
 	}
 
 	void update() override
@@ -448,7 +499,7 @@ public:
 			// immediately move to the bottom
 		}
 
-		clearBlocks();
+		//clearBlocks();
 	}
 
 };
