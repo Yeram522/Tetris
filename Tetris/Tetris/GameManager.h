@@ -169,18 +169,6 @@ public:
 
 		}
 	}
-
-	//vector<Position> getScreenPoses()
-	//{
-	//	vector<Position> Screenposes;
-	//	//int h = 0, int w = 0;
-	//	for (int h = 0; h <= this->getDim().y; h++)
-	//		for (int w = 0; w <= this->getDim().x; w++)
-	//			Screenposes.push_back({ w,h });
-	//						
-	//	return Screenposes;
-	//}
-	
 	
 	Position getPos() { return pos; } // getter function
 	void setPos(const Position& pos) { this->pos = pos; } // setter function

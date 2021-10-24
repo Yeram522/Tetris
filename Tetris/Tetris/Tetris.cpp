@@ -3,8 +3,6 @@
 #endif
 
 #include "GameManager.h"
-#include <algorithm>
-
 
 using namespace std;
 
@@ -13,11 +11,13 @@ class Block; //테트리스 블록 게임오브젝트
 class Tetris;//규칙
 
 class UI : public GameObject {
+private:
+	vector<string> text;
+	string line;
 public: //배치 할 위치, 생성할 박스 크기를 넣으면 스크린에 박스UI를 그린다.
-	UI(const Position& pos, const Dimension& sz) :GameObject(pos,sz)
+	UI(const Position& pos, const Dimension& sz) :GameObject(pos,sz),line("+")
 	{ 
 		//┌─────────────────┐
-		string line("+");
 		line.append((size_t)(getDim().x - 2), '-').append("+"); 
 
 		//│                 │
@@ -28,7 +28,6 @@ public: //배치 할 위치, 생성할 박스 크기를 넣으면 스크린에 �
 		string bottom("+");
 		bottom.append((size_t)(getDim().x - 2), '-').append("+");
 
-
 		for (int i = 0; i < sz.y - 2; i++) line.append(column);
 		line.append(bottom);
 
@@ -36,9 +35,14 @@ public: //배치 할 위치, 생성할 박스 크기를 넣으면 스크린에 �
 		setFace(testline);//부모클래스 face에 복사.
 	}
 
-	void update()
+	void writeText(string _text,int linecount)
 	{
+		line.replace(this->getDim().x*linecount +1, _text.size(), _text);
+	}
 
+	void updateText()//textcomponent-> update per frame.
+	{	
+		setFace(line.c_str());
 	}
 };
 
@@ -213,12 +217,16 @@ private:
 	Block* block;
 	GameObject stackedblocks; // 밑에 적재된 블록. vector 사용. 가변적임.
 	int pastDim;
+	//scoreboard component
+	int score;
 	int linepoint;
+	int speed;
 
 public:
 	Tetris()
 		:GameObject("", { 0,0 }, { 30,30 }), block(Block::GetInstance())
-		, gamescreen({0,0} ,{12,22}), scoreboard({ 13, 1 }, { 7,3 }), nextblockcard( {13,5} , {6,4} )
+		, gamescreen({ 0,0 }, { 12,22 }), scoreboard({ 13, 1 }, { 15,5 }), nextblockcard({ 13,7 }, { 8,6 })
+		, score(0), linepoint(0), speed(1000)
 	{
 		stackedblocks.setFace("          ");
 		stackedblocks.setDim({ 10, 1 });
@@ -226,24 +234,52 @@ public:
 		pastDim = stackedblocks.getDim().y;
 	}
 
+	void updateScoreBoard()
+	{
+		string scoretxt("score: ");
+		string linetxt("line: ");
+		string speedtxt("speed: ");
+
+		scoretxt.append(to_string(score));
+		linetxt.append(to_string(linepoint));
+		speedtxt.append(to_string(speed));
+		scoreboard.writeText(scoretxt,1);
+		scoreboard.writeText(linetxt,2);
+		scoreboard.writeText(speedtxt,3);
+
+		scoreboard.updateText();
+	}
+	
 	//clear blocks 
 	void clearBlocks()
 	{
 		//stackedblocks의 dim.y 만큼 검사한다.
 		int deletecount = 0;
+		vector<int> toeraseliney;
 		string strblocks(stackedblocks.getFace());
 		for (int dh = 0; dh < stackedblocks.getDim().y; dh++)
 			if (strblocks.substr(dh*10, 10) == "**********")
 			{
-				strblocks.erase(dh * 10, dh + 9);
+				
+				//if blocks ared erased middle position
+				if (dh != 0)//dh==0 -> bottom position.y of blocks 
+				{
+					toeraseliney.push_back(dh);
+				}
 				deletecount++;
 			}
+
+		for (int i = 0; i < deletecount; i++)
+		{
+			strblocks.erase(toeraseliney[i] * 10, 10);
+		}
 		stackedblocks.setFace(strblocks.c_str());
 		if(stackedblocks.getDim().y - deletecount == 0) stackedblocks.setDim({ 10, 1 });
 		else
-			stackedblocks.setDim({ 10, stackedblocks.getDim().y - deletecount });
-		stackedblocks.setPos({ stackedblocks.getPos().x , stackedblocks.getPos().y + deletecount});
+			stackedblocks.setDim({ 10, stackedblocks.getDim().y  - deletecount});
+		stackedblocks.setPos({ stackedblocks.getPos().x , stackedblocks.getPos().y + deletecount });
 		linepoint += deletecount;
+		score += 10 * deletecount;
 	}
 	
 	//save the block when crash with other stacked blocks.
@@ -335,6 +371,7 @@ public:
 	void autoMoveBlock()
 	{
 		if (checkDownCollision()) return;
+		if (gamescreen.getDim().y - block->getDim().y - 1 <= block->getPos().y) return;
 		block->move();
 	}
 	
@@ -383,7 +420,6 @@ public:
 		nextblockcard.draw();
 		stackedblocks.draw();
 		block->draw();
-		
 	}
 
 	void update() override
@@ -437,9 +473,10 @@ int main()
 
 		screen->clear();
 
+		tetris.updateScoreBoard();
+
 		tetris.draw();
 
-		//tetris.processCollisionEnter();
 		//--------------------------
 		input->readInputs();
 
@@ -447,7 +484,7 @@ int main()
 
 		screen->render();
 
-		tetris.autoMoveBlock();
+		//tetris.autoMoveBlock();
 
 		Sleep(100);
 
