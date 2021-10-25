@@ -217,6 +217,7 @@ private:
 	Block* block;
 	GameObject stackedblocks; // 밑에 적재된 블록. vector 사용. 가변적임.
 	int pastDim;
+	bool isLooping;
 	//scoreboard component
 	int score;
 	int linepoint;
@@ -226,7 +227,7 @@ private:
 	int randomshape;
 public:
 	Tetris()
-		:GameObject("", { 0,0 }, { 30,30 }), block(Block::GetInstance())
+		:GameObject("", { 0,0 }, { 30,30 }), block(Block::GetInstance()), isLooping(true)
 		, gamescreen({ 0,0 }, { 12,22 }), scoreboard({ 13, 1 }, { 15,5 }), nextblockcard({ 13,7 }, { 8,6 })
 		, nextblock({ 16,8 }, { 4,4 }), score(0), linepoint(0), speed(1000)
 	{
@@ -237,6 +238,8 @@ public:
 
 		creatNextRandomBlock();
 	}
+
+	bool getIsLooping() { return isLooping; }
 
 	void updateScoreBoard()
 	{
@@ -297,6 +300,7 @@ public:
 
 		creatNextRandomBlock();
 	}
+	
 	//clear blocks 
 	void clearBlocks()
 	{
@@ -315,10 +319,14 @@ public:
 
 		if (deletecount == 0) return;
 
-		strblocks.resize((stackedblocks.getDim().y - deletecount)*10);
+		
 		stackedblocks.setFace(strblocks.c_str());
 
-		if(stackedblocks.getDim().y - deletecount == 0) stackedblocks.setDim({ 10, 1 });
+		if (stackedblocks.getDim().y - deletecount == 0)
+		{
+			stackedblocks.setDim({ 10, 1 });
+			stackedblocks.setFace("          ");
+		}
 		else
 			stackedblocks.setDim({ 10, stackedblocks.getDim().y  - deletecount });
 
@@ -331,6 +339,7 @@ public:
 	//save the block when crash with other stacked blocks.
 	void stackBlocks()
 	{
+		if (stackedblocks.getDim().y == gamescreen.getDim().y -1)  gameOver();
 		int newDim;
 		int hp;
 		if (pastDim < gamescreen.getDim().y - block->getPos().y )
@@ -347,8 +356,9 @@ public:
 		
 		//resize h capacity
 		stackedblocks.setDim({ 10, newDim }); 
-		stackedblocks.setPos({ gamescreen.getPos().x + 1, hp });
+		stackedblocks.setPos({ stackedblocks.getPos().x, hp });
 		string staticblocks;
+
 	   //just get the screen canvas and save the blocks status.
 		for (hp ; hp <= 22; hp++)
 			for (int wp = stackedblocks.getPos().x; wp < stackedblocks.getPos().x + 10; wp++)
@@ -403,17 +413,26 @@ public:
 			if ((screen->readCanvas()[screen->pos2Offset({ dw ,dh + 1 })] == '*' || screen->readCanvas()[screen->pos2Offset({ dw ,dh + 1 })] == '-') /*target stacked block*/
 				&& screen->readCanvas()[screen->pos2Offset({ dw ,dh })] == '*') /*singleton Block, can move*/
 			{
+
 				stackBlocks();
 				
-				Borland::gotoxy(0, 36);
-				printf("충돌");
-				Borland::gotoxy(0, 0);
-
 				return true;
 			}
 
 		return false;
 
+	}
+
+	void forceMoveDown()
+	{
+		for(int dh= block->getPos().y+block->getDim().y; dh<=gamescreen.getDim().y;dh++)
+			for(int dw = block->getPos().x; dw <= block->getDim().x; dw++)
+				if (screen->readCanvas()[screen->pos2Offset({ dw ,dh})] == '*' || screen->readCanvas()[screen->pos2Offset({ dw ,dh })] == '-')
+				{
+					block->setPos({ block->getPos().x , dh - block->getDim().x + 1 });
+					return;
+				}
+		
 	}
 
 	void autoMoveBlock()
@@ -496,12 +515,18 @@ public:
 			block->setPos({ block->getPos().x , block->getPos().y+1 });
 		}
 		if (input->getKey(VK_SPACE)) {
-			// immediately move to the bottom
+			forceMoveDown();
 		}
 
 		//clearBlocks();
 	}
 
+	void gameOver()
+	{
+		isLooping = false;
+		Borland::gotoxy(28,11);
+		printf("GameOver");
+	}
 };
 
 
@@ -519,8 +544,7 @@ int main()
 	block->changeBlockShape(BlockShape::L);
 
 	// Game loop
-	bool isLooping = true;
-	while (isLooping) {
+	while (tetris.getIsLooping()) {
 
 		screen->clear();
 
@@ -540,7 +564,6 @@ int main()
 		Sleep(100);
 
 	}
-	printf("\nGame Over\n");
 
 	return 0;
 }
